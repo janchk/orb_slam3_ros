@@ -36,7 +36,7 @@
 extern ORB_SLAM3::System* pSLAM;
 extern ORB_SLAM3::System::eSensor sensor_type;
 
-extern std::string world_frame_id, cam_frame_id, imu_frame_id;
+extern std::string world_frame_id, cam_frame_id, robot_frame_id, imu_frame_id;
 
 extern ros::Publisher pose_pub, odom_pub, kf_markers_pub;
 extern ros::Publisher tracked_mappoints_pub, all_mappoints_pub;
@@ -51,6 +51,7 @@ void publish_tracking_img(cv::Mat, ros::Time);
 void publish_tracked_points(std::vector<ORB_SLAM3::MapPoint*>, ros::Time);
 void publish_all_points(std::vector<ORB_SLAM3::MapPoint*>, ros::Time);
 void publish_tf_transform(Sophus::SE3f, string, string, ros::Time);
+void publish_tf_transform(Sophus::SE3f, string, string, string, ros::Time); // For statically attached to some robot
 void publish_body_odom(Sophus::SE3f, Eigen::Vector3f, Eigen::Vector3f, ros::Time);
 void publish_kf_markers(std::vector<Sophus::SE3f>, ros::Time);
 

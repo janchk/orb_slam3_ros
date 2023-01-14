@@ -60,6 +60,7 @@ int main(int argc, char **argv)
     }
 
     node_handler.param<std::string>(node_name + "/world_frame_id", world_frame_id, "world");
+    node_handler.param<std::string>(node_name + "/robot_frame_id", robot_frame_id, "base_link");
     node_handler.param<std::string>(node_name + "/cam_frame_id", cam_frame_id, "camera");
     node_handler.param<std::string>(node_name + "/imu_frame_id", imu_frame_id, "imu");
 

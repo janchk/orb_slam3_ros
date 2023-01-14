@@ -11,7 +11,7 @@ ORB_SLAM3::System* pSLAM;
 ORB_SLAM3::System::eSensor sensor_type = ORB_SLAM3::System::NOT_SET;
 
 // Variables for ROS
-std::string world_frame_id, cam_frame_id, imu_frame_id;
+std::string world_frame_id, cam_frame_id, imu_frame_id, robot_frame_id;
 ros::Publisher pose_pub, odom_pub, kf_markers_pub;
 ros::Publisher tracked_mappoints_pub, all_mappoints_pub;
 image_transport::Publisher tracking_img_pub;
@@ -88,7 +88,13 @@ void publish_topics(ros::Time msg_time, Eigen::Vector3f Wbb)
     
     // Common topics
     publish_camera_pose(Twc, msg_time);
-    publish_tf_transform(Twc, world_frame_id, cam_frame_id, msg_time);
+
+    if (robot_frame_id != ""){
+        publish_tf_transform(Twc, world_frame_id, robot_frame_id, cam_frame_id, msg_time);
+    }
+    else {
+        publish_tf_transform(Twc, world_frame_id, cam_frame_id, msg_time);
+    }
 
     publish_tracking_img(pSLAM->GetCurrentFrame(), msg_time);
     publish_tracked_points(pSLAM->GetTrackedMapPoints(), msg_time);
@@ -105,6 +111,12 @@ void publish_topics(ros::Time msg_time, Eigen::Vector3f Wbb)
         // IMU provides body angular velocity in body frame (Wbb) which is transformed to world frame (Wwb)
         Sophus::Matrix3f Rwb = Twb.rotationMatrix();
         Eigen::Vector3f Wwb = Rwb * Wbb;
+
+        // if (robot_frame_id != "") {
+        //     publish_tf_transform(Twb, world_frame_id, robot_frame_id, imu_frame_id, msg_time);
+        // } else {
+            // publish_tf_transform(Twb, world_frame_id, imu_frame_id, msg_time);
+        // }
 
         publish_tf_transform(Twb, world_frame_id, imu_frame_id, msg_time);
         publish_body_odom(Twb, Vwb, Wwb, msg_time);
@@ -163,6 +175,25 @@ void publish_tf_transform(Sophus::SE3f T_SE3f, string frame_id, string child_fra
     static tf::TransformBroadcaster tf_broadcaster;
 
     tf_broadcaster.sendTransform(tf::StampedTransform(tf_transform, msg_time, frame_id, child_frame_id));
+}
+
+void publish_tf_transform(Sophus::SE3f T_SE3f, string frame_id, string robot_frame_id, string child_frame_id, ros::Time msg_time)
+{   
+    // Hardcoded values. TODO change to more flexible approach!
+    tf::Quaternion static_quat(0, 0, 0);
+    static_quat.setRPY(0, 0, 0);
+
+    tf::Vector3 static_tvec(
+        0, 0, 0
+    );
+
+    tf::Transform camera_to_robot_static_transform = tf::Transform(static_quat, static_tvec);
+    tf::Transform tf_transform = SE3f_to_tfTransform(T_SE3f);
+
+    static tf::TransformBroadcaster tf_broadcaster;
+
+    tf_broadcaster.sendTransform(tf::StampedTransform(camera_to_robot_static_transform, msg_time, robot_frame_id, child_frame_id));
+    tf_broadcaster.sendTransform(tf::StampedTransform(tf_transform, msg_time, frame_id, robot_frame_id));
 }
 
 void publish_tracking_img(cv::Mat image, ros::Time msg_time)
